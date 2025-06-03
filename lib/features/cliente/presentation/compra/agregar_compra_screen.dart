@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:io';
 import 'package:casa_de_cambios/features/operaciones/domain/model/compra_model.dart';
 import 'package:casa_de_cambios/features/operaciones/domain/model/venta_con_moneda.dart';
 import 'package:casa_de_cambios/features/operaciones/domain/model/venta_model.dart';
@@ -55,10 +55,8 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
       setState(() {
-        _imagenController.text = base64Image;
+        _imagenController.text = pickedFile.path;
       });
     } else {
       ScaffoldMessenger.of(
@@ -83,7 +81,9 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
       setState(() {
         _ventas = ventas;
       });
-    } catch (e) {}
+    } catch (e) {
+      // Manejo de error opcional
+    }
   }
 
   @override
@@ -122,7 +122,7 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
         return;
       }
 
-      final imagen =
+      final imagenPath =
           _imagenController.text.isNotEmpty ? _imagenController.text : null;
 
       final compra = Compra(
@@ -130,7 +130,7 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
         idUsuario: _userId!,
         montoCompra: montoCompra,
         totalPagar: _totalPagar,
-        imagen: imagen,
+        imagen: imagenPath,
       );
 
       try {
@@ -219,7 +219,6 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
                   'Tipo de cambio: ${_ventaSeleccionada!.tipoCambio.toStringAsFixed(2)} Bs.',
                   style: const TextStyle(fontSize: 17),
                 ),
-
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: _tomarFoto,
@@ -229,10 +228,7 @@ class _AgregarCompraScreenState extends ConsumerState<AgregarCompraScreen> {
               if (_imagenController.text.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Image.memory(
-                    base64Decode(_imagenController.text),
-                    height: 150,
-                  ),
+                  child: Image.file(File(_imagenController.text), height: 150),
                 ),
               const SizedBox(height: 24),
               ElevatedButton(

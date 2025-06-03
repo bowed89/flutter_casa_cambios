@@ -1,8 +1,5 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
+import 'dart:io'; // Import necesario para usar File
 import 'package:casa_de_cambios/features/operaciones/domain/model/compra_detallada_model.dart';
-import 'package:casa_de_cambios/features/operaciones/domain/model/compra_model.dart';
 import 'package:casa_de_cambios/features/operaciones/domain/providers/compra_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +18,6 @@ class _CompraListScreenState extends ConsumerState<CompraListScreen> {
   @override
   void initState() {
     super.initState();
-     _cargarCompras();
     _comprasFuture = _cargarCompras();
   }
 
@@ -35,7 +31,7 @@ class _CompraListScreenState extends ConsumerState<CompraListScreen> {
     final compraService = ref.read(compraServiceProvider);
     final todas = await compraService.getCompraDetallada();
 
-    print("todas777 ===> ${todas}");
+    print("todas ===> $todas");
 
     return todas.where((c) => c.id_usuario == userId).toList();
   }
@@ -78,17 +74,24 @@ class _CompraListScreenState extends ConsumerState<CompraListScreen> {
     );
   }
 
-  Widget _buildImagenBase64(String? base64String) {
-    if (base64String == null || base64String.isEmpty) {
+  Widget _buildImagenDesdeRuta(String? rutaImagen) {
+    if (rutaImagen == null || rutaImagen.isEmpty) {
       return const Icon(Icons.image_not_supported);
     }
 
-    try {
-      Uint8List bytes = base64Decode(base64String);
-      return Image.memory(bytes, width: 60, height: 60, fit: BoxFit.cover);
-    } catch (e) {
+    final file = File(rutaImagen);
+    if (!file.existsSync()) {
       return const Icon(Icons.broken_image);
     }
+
+    return Image.file(
+      file,
+      width: 60,
+      height: 60,
+      fit: BoxFit.cover,
+      errorBuilder:
+          (context, error, stackTrace) => const Icon(Icons.broken_image),
+    );
   }
 
   @override
@@ -119,7 +122,7 @@ class _CompraListScreenState extends ConsumerState<CompraListScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: ListTile(
-                  leading: _buildImagenBase64(compra.imagen),
+                  leading: _buildImagenDesdeRuta(compra.imagen),
                   title: Text(
                     'Compra: \$${compra.monto_compra.toStringAsFixed(2)} ${compra.nombre_moneda}',
                   ),
